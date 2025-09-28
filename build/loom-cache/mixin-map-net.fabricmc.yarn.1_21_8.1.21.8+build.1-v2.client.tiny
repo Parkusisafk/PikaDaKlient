@@ -1,0 +1,2 @@
+v1	named	intermediary
+FIELD	com/pikadaklient/mixin/CommandMixin	Lnet/minecraft/client/gui/widget/TextFieldWidget;	chatField	field_2382

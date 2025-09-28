@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "com.pikadaklient.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"CommandMixin",
+		"TickMixin"
+	],
+	"client": [
+		"CommandMixin",
+		"TickMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

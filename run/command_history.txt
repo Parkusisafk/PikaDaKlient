@@ -1,0 +1,4 @@
+/register Password1 Password1
+/skiptutorial
+/warp afk
+/sp

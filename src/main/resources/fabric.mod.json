@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "pikadaklient",
+	"version": "1.0.0",
+	"name": "PikaDaKlient",
+	"description": "Mod for Pika Network OP Prison season 28 auto minerbot",
+	"authors": [
+		"ParkusDaking"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/modid/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.pikadaklient.pikadaklient"
+		],
+		"client": [
+			"com.pikadaklient.ClientInit"
+		]
+	},
+	"mixins": ["pikadaklient.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.17.2",
+		"minecraft": "~1.21.8",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
