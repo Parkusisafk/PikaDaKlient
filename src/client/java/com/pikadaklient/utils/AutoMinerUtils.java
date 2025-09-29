@@ -27,7 +27,7 @@ public class AutoMinerUtils {
     // Constants
     private static final int RESET_Y_THRESHOLD = 90;
     private static final int TARGET_SETUP_Y = 88;
-    private static final float AIM_PITCH = 30.0f;
+    private static final float AIM_PITCH = 50.0f;
     private static final int DESCENT_BLOCKS = 3;
     private static final int TURN_TICKS = 6;
 
@@ -211,62 +211,74 @@ public class AutoMinerUtils {
                 break;
 
             case LOOP_MOVE:
-                mc.options.leftKey.setPressed(true);
-                mc.player.setPitch(AIM_PITCH);
-                //mc.player.setYaw();
-                // Check left wall
-                BlockPos playerPos1 = mc.player.getBlockPos();
-                Direction moveDir = currentDir; // direction we are flying along
-                Direction lookDir2 = moveDir.rotateYClockwise(); // 90° clockwise from movement = facing inward
+                if (mc.player.getY() <= 20){
+                    currentState = State.AFK_RESET;
+                } else if (mc.player.getY() >=90){
+                    currentState = State.SURFACE_CHECK;
+                } else {
+                    mc.options.leftKey.setPressed(true);
+                    mc.player.setPitch(AIM_PITCH);
+                    //mc.player.setYaw();
+                    // Check left wall
+                    BlockPos playerPos1 = mc.player.getBlockPos();
+                    Direction moveDir = currentDir; // direction we are flying along
+                    Direction lookDir2 = moveDir.rotateYClockwise(); // 90° clockwise from movement = facing inward
 
 
 // Block behind (wall you’re hugging)
-                BlockPos backPos = playerPos1.offset(lookDir2);
+                    BlockPos backPos = playerPos1.offset(lookDir2);
 
 // Block to the left (corner detection)
-                BlockPos leftPos = playerPos1.offset(moveDir.rotateYCounterclockwise());
+                    BlockPos leftPos = playerPos1.offset(moveDir.rotateYCounterclockwise());
 
 // Debugging
-                BlockState backState = mc.world.getBlockState(backPos);
-                BlockState leftState = mc.world.getBlockState(leftPos);
+                    BlockState backState = mc.world.getBlockState(backPos);
+                    BlockState leftState = mc.world.getBlockState(leftPos);
 
-                System.out.println("[AutoMiner] Back block: " + backPos + " Type: " + backState.getBlock().getTranslationKey());
-                System.out.println("[AutoMiner] Left block: " + leftPos + " Type: " + leftState.getBlock().getTranslationKey());
+                    System.out.println("[AutoMiner] Back block: " + backPos + " Type: " + backState.getBlock().getTranslationKey());
+                    System.out.println("[AutoMiner] Left block: " + leftPos + " Type: " + leftState.getBlock().getTranslationKey());
 
 // Turning condition: bedrock to the left
-                if (isBedrock(leftState)) {
-                    System.out.println("[AutoMiner] Bedrock detected on left at " + leftPos + ", turning...");
-                    mc.options.leftKey.setPressed(false);
-                    turnTargetYaw = mc.player.getYaw() + 90.0f;
-                    turnTargetYaw %= 360;
-                    turnTickCounter = 0;
-                    currentState = State.LOOP_TURN;
+                    if (isBedrock(leftState)) {
+                        System.out.println("[AutoMiner] Bedrock detected on left at " + leftPos + ", turning...");
+                        mc.options.leftKey.setPressed(false);
+                        turnTargetYaw = mc.player.getYaw() + 90.0f;
+                        turnTargetYaw %= 360;
+                        turnTickCounter = 0;
+                        currentState = State.LOOP_TURN;
+                    }
                 }
                 break;
 
             case LOOP_TURN:
-                float currentYaw = mc.player.getYaw();
-                float yawDiff = turnTargetYaw - currentYaw;
-                while (yawDiff < -180) yawDiff += 360;
-                while (yawDiff > 180) yawDiff -= 360;
+                if (mc.player.getY() <= 20){
+                    currentState = State.AFK_RESET;
+                } else if (mc.player.getY() >=90){
+                    currentState = State.SURFACE_CHECK;
+                } else {
+                    float currentYaw = mc.player.getYaw();
+                    float yawDiff = turnTargetYaw - currentYaw;
+                    while (yawDiff < -180) yawDiff += 360;
+                    while (yawDiff > 180) yawDiff -= 360;
 
-                float turnAmount = yawDiff / (TURN_TICKS - turnTickCounter);
-                mc.player.setYaw(currentYaw + turnAmount);
-                turnTickCounter++;
+                    float turnAmount = yawDiff / (TURN_TICKS - turnTickCounter);
+                    mc.player.setYaw(currentYaw + turnAmount);
+                    turnTickCounter++;
 
-                if (turnTickCounter >= TURN_TICKS) {
-                    turnsCompleted++;
-                    currentDir = currentDir.rotateYClockwise();
-                    System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
-                    if (turnsCompleted >= 4) {
-                        currentState = State.DESCEND;
-                        descentYStart = mc.player.getY();
-                        System.out.println("[AutoMiner] Completed loop, starting descent.");
-                    } else {
-                        currentState = State.LOOP_MOVE;
+                    if (turnTickCounter >= TURN_TICKS) {
+                        turnsCompleted++;
+                        currentDir = currentDir.rotateYClockwise();
+                        System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
+                        if (turnsCompleted >= 4) {
+                            currentState = State.DESCEND;
+                            descentYStart = mc.player.getY();
+                            System.out.println("[AutoMiner] Completed loop, starting descent.");
+                        } else {
+                            currentState = State.LOOP_MOVE;
+                        }
                     }
+                    mc.options.leftKey.setPressed(false);
                 }
-                mc.options.leftKey.setPressed(false);
                 break;
 
             case DESCEND:
@@ -278,7 +290,7 @@ public class AutoMinerUtils {
                 if (mc.player.getY() <= descentYStart - 3) {
                     mc.options.sneakKey.setPressed(false);
                     System.out.println("[AutoMiner] Descend complete. CurrentY=" + mc.player.getY());
-                    if (mc.player.getY() <= 19) {
+                    if (mc.player.getY() <= 20) {
                         currentState = State.AFK_RESET;
                         System.out.println("[AutoMiner] Reached bottom. AFK reset.");
                     } else {
@@ -429,22 +441,60 @@ public class AutoMinerUtils {
     }
 
     private static boolean handleCaptcha(MinecraftClient mc) {
-        if (!(mc.currentScreen instanceof HandledScreen<?> screen) || (screen instanceof InventoryScreen)) return false;
+        if (!(mc.currentScreen instanceof HandledScreen<?> screen)) {
+            System.out.println("[DEBUG CAPTCHA] Screen Check: FAILED (Not a HandledScreen)");
+            return false;
+        }
+
+        // Confirmed screen is a HandledScreen (class_476)
         Slot targetSlot = null;
+
+        System.out.println("--- CAPTCHA ITEM DEBUG START ---");
+
+        // Iterate through all slots in the open menu
         for (Slot slot : screen.getScreenHandler().slots) {
             ItemStack stack = slot.getStack();
-            if (!stack.isEmpty()) {
-                String name = stack.getName().getString();
-                if ((name.contains("Click me") || name.contains("Continue")) && !stack.getItem().toString().contains("stained_glass_pane")) {
-                    targetSlot = slot;
-                    break;
-                }
+
+            if (stack.isEmpty()) continue; // Skip empty slots
+
+            // Get the item's unformatted name and the item ID string
+            String plainName = stack.getName().getString().toLowerCase();
+            String itemString = stack.getItem().toString();
+
+            // --- ITEM MATCHING CONDITIONS ---
+            boolean nameMatch = plainName.contains("click") && (plainName.contains("confirm") || plainName.contains("continue"));
+            boolean isFiller = itemString.contains("stained_glass_pane");
+            boolean isMatch = nameMatch && !isFiller;
+
+            // Log everything about the detected item
+            System.out.printf(
+                    "[SLOT %d] Item: %s | Name: '%s' | NameMatch: %b | IsFiller: %b | Final Match: %b%n",
+                    slot.id, itemString, plainName, nameMatch, isFiller, isMatch
+            );
+
+            // --- Core Clicking Logic ---
+            if (isMatch) {
+                targetSlot = slot;
+                break; // Found the target, exit the loop
             }
         }
+
+        System.out.println("--- CAPTCHA ITEM DEBUG END ---");
+
+        // Click the target slot if found
         if (targetSlot != null) {
-            mc.interactionManager.clickSlot(screen.getScreenHandler().syncId,
-                    targetSlot.id, 0, SlotActionType.PICKUP, mc.player);
+            System.out.printf("[CAPTCHA SUCCESS] Clicking Slot ID: %d%n", targetSlot.id);
+            mc.interactionManager.clickSlot(
+                    screen.getScreenHandler().syncId,
+                    targetSlot.id,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+            );
+        } else {
+            System.out.println("[CAPTCHA FAIL] No clickable item found.");
         }
+
         return targetSlot != null;
     }
 
