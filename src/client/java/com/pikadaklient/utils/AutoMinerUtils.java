@@ -282,22 +282,28 @@ public class AutoMinerUtils {
                 break;
 
             case DESCEND:
-                mc.options.leftKey.setPressed(false);
-                mc.options.sneakKey.setPressed(true);
+                if (mc.player.getY() <= 20){
+                    currentState = State.AFK_RESET;
+                } else if (mc.player.getY() >=90){
+                    currentState = State.SURFACE_CHECK;
+                } else {
+                    mc.options.leftKey.setPressed(false);
+                    mc.options.sneakKey.setPressed(true);
 
-                if (descentYStart == 0) descentYStart = mc.player.getY();
+                    if (descentYStart == 0) descentYStart = mc.player.getY();
 
-                if (mc.player.getY() <= descentYStart - 3) {
-                    mc.options.sneakKey.setPressed(false);
-                    System.out.println("[AutoMiner] Descend complete. CurrentY=" + mc.player.getY());
-                    if (mc.player.getY() <= 20) {
-                        currentState = State.AFK_RESET;
-                        System.out.println("[AutoMiner] Reached bottom. AFK reset.");
-                    } else {
-                        turnsCompleted = 0;
-                        currentState = State.LOOP_MOVE;
-                        descentYStart = 0;
-                        System.out.println("[AutoMiner] Starting next mining loop.");
+                    if (mc.player.getY() <= descentYStart - 3) {
+                        mc.options.sneakKey.setPressed(false);
+                        System.out.println("[AutoMiner] Descend complete. CurrentY=" + mc.player.getY());
+                        if (mc.player.getY() <= 20) {
+                            currentState = State.AFK_RESET;
+                            System.out.println("[AutoMiner] Reached bottom. AFK reset.");
+                        } else {
+                            turnsCompleted = 0;
+                            currentState = State.LOOP_MOVE;
+                            descentYStart = 0;
+                            System.out.println("[AutoMiner] Starting next mining loop.");
+                        }
                     }
                 }
                 break;
@@ -442,7 +448,7 @@ public class AutoMinerUtils {
 
     private static boolean handleCaptcha(MinecraftClient mc) {
         if (!(mc.currentScreen instanceof HandledScreen<?> screen)) {
-            System.out.println("[DEBUG CAPTCHA] Screen Check: FAILED (Not a HandledScreen)");
+            //System.out.println("[DEBUG CAPTCHA] Screen Check: FAILED (Not a HandledScreen)");
             return false;
         }
 
