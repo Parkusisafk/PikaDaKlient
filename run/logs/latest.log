@@ -1,12 +1,12 @@
-[23:15:34] [main/INFO]: Loading Minecraft 1.21.8 with Fabric Loader 0.17.2
-[23:15:34] [main/INFO]: Loading 4 mods:
+[09:21:36] [main/INFO]: Loading Minecraft 1.21.8 with Fabric Loader 0.17.2
+[09:21:37] [main/INFO]: Loading 4 mods:
 	- fabricloader 0.17.2
 	   \-- mixinextras 0.5.0
-	- java 24
+	- java 21
 	- minecraft 1.21.8
-[23:15:34] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/C:/Users/imadu/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.16.3+mixin.0.8.7/3e535042688d1265447e52ad86950b7d9678a5fa/sponge-mixin-0.16.3+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
-[23:15:37] [Datafixer Bootstrap/INFO]: 269 Datafixer optimizations took 628 milliseconds
-[23:15:38] [main/WARN]: Failed to get system info for Render Extensions
+[09:21:37] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/C:/Users/imadu/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.16.3+mixin.0.8.7/3e535042688d1265447e52ad86950b7d9678a5fa/sponge-mixin-0.16.3+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[09:21:39] [Datafixer Bootstrap/INFO]: 269 Datafixer optimizations took 656 milliseconds
+[09:21:40] [main/WARN]: Failed to get system info for Render Extensions
 java.lang.IllegalStateException: Can't getDevice() before it was initialized
 	at knot/com.mojang.blaze3d.systems.RenderSystem.getDevice(RenderSystem.java:384) ~[client-intermediary.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.method_68671(MinecraftClient.java:2479) ~[client-intermediary.jar:?]

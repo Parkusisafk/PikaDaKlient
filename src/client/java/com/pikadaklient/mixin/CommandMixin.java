@@ -1,6 +1,7 @@
 package com.pikadaklient.mixin;
 
 import com.pikadaklient.utils.AutoClickerUtils;
+import com.pikadaklient.utils.AutoMinerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -38,13 +39,13 @@ public class CommandMixin {
 		System.out.println("[PikadaClient Debug] KeyPress Mixin running. Processed message: \"" + message + "\"");
 
 		if (message.equalsIgnoreCase("sp")) {
-			AutoClickerUtils.start();
+			AutoMinerUtils.start();
 			mc.player.sendMessage(Text.literal("§aAutoClicker started."), false);
 			mc.setScreen(null);
 			cir.setReturnValue(true);
 			cir.cancel();
 		} else if (message.equalsIgnoreCase("ep")) {
-			AutoClickerUtils.stop();
+			AutoMinerUtils.stop();
 			mc.player.sendMessage(Text.literal("§cAutoClicker stopped."), false);
 			mc.setScreen(null);
 			cir.setReturnValue(true);

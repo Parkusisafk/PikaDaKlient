@@ -24,18 +24,34 @@ loom {
 	}
 
 	runConfigs {
-		// Modify the client run configuration
+		// *** MODIFY THIS BLOCK ***
 		named("client") {
-			vmArgs.addAll(["-Dfabric.dli.config=client"])
-			// workingDirectory and ideaModule removed in modern Loom
+			vmArgs.addAll([
+					"-Dfabric.dli.config=client", // Keep this existing line
+					// Add all the necessary --add-opens flags here
+					'--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+					'--add-opens=java.base/java.net=ALL-UNNAMED',
+					'--add-opens=java.base/java.util=ALL-UNNAMED',
+					'--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+					'--add-opens=java.base/java.lang=ALL-UNNAMED', // This one is sometimes needed
+					'--add-opens=java.base/java.io=ALL-UNNAMED' // Sometimes also required
+			])
 		}
+		// *** END OF MODIFICATION ***
 
-		// Modify the server run configuration
+		// Modify the server run configuration (optional, but good practice)
 		named("server") {
-			// No extra settings needed for now
+			// If you ever run a server, you'll want to add the flags here too
+			vmArgs.addAll([
+					'--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+					// ... other server-side flags
+			])
 		}
 	}
+
+	accessWidenerPath = file("src/main/resources/pikadaklient.accesswidener")
 }
+// ... rest of your build.gradle
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -79,3 +95,4 @@ publishing {
 		// add publishing repos if needed
 	}
 }
+

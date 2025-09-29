@@ -1,6 +1,7 @@
 package com.pikadaklient.mixin;
 
 import com.pikadaklient.utils.AutoClickerUtils;
+import com.pikadaklient.utils.AutoMinerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -23,6 +24,6 @@ public class TickMixin {
         if (player == null || world == null) return;
 
         // Call the AutoClicker tick function
-        AutoClickerUtils.tick(mc);
+        AutoMinerUtils.tick(mc);
     }
 }
