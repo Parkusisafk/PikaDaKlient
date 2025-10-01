@@ -49,6 +49,7 @@ public class AutoMinerUtils {
     private static int turnTickCounter;
     private static int turnsCompleted = 0;
     private static double descentYStart = 0;
+    private static int tickelapsedforsetupmove = 0;
 
     public static void start() {
         if (MinecraftClient.getInstance().player == null) return;
@@ -115,6 +116,12 @@ public class AutoMinerUtils {
                 break;
 
             case SETUP_FLYING:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 if (!mc.player.getAbilities().flying) {
                     // Simulate a jump (spacebar press)
                     mc.options.jumpKey.setPressed(true);
@@ -140,6 +147,7 @@ public class AutoMinerUtils {
                 if (mc.player.getPos().distanceTo(targetCenter) < 0.3) {
                     mc.player.setVelocity(Vec3d.ZERO);
                     currentState = State.SETUP_DESCEND;
+                    tickelapsedforsetupmove = 0;
                     System.out.println("[AutoMiner] Reached corner, descending...");
                 }
                 break;
@@ -269,7 +277,7 @@ public class AutoMinerUtils {
                         turnsCompleted++;
                         currentDir = currentDir.rotateYClockwise();
                         System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
-                        if (turnsCompleted >= 4) {
+                        if (turnsCompleted >= 2) {
                             currentState = State.DESCEND;
                             descentYStart = mc.player.getY();
                             System.out.println("[AutoMiner] Completed loop, starting descent.");
@@ -390,20 +398,41 @@ public class AutoMinerUtils {
 
     private static boolean findCorner(MinecraftClient mc) {
         BlockPos playerPos = mc.player.getBlockPos();
+
+        // Define the hardcoded blacklisted coordinate
+        final int BLACKLIST_X = 67055;
+        final int BLACKLIST_Z = 233104;
+
         for (int x = playerPos.getX() - 50; x < playerPos.getX() + 50; x++) {
             for (int z = playerPos.getZ() - 50; z < playerPos.getZ() + 50; z++) {
+
+                // NOTE: TARGET_SETUP_Y must be defined outside this method (e.g., as a static final field)
                 BlockPos pos = new BlockPos(x, TARGET_SETUP_Y, z);
+
+                // --- BLACKLIST CHECK ---
+                if (x == BLACKLIST_X || z == BLACKLIST_Z) {
+                    System.out.println("[AutoMiner] Skipping blacklisted corner: " + pos + " (Hardcoded exclusion)");
+                    continue; // Skip the rest of the loop iteration for this position
+                }
+                // -----------------------
+
                 BlockState state = mc.world.getBlockState(pos);
+
                 if (state.isAir()) {
                     int airCount = 0, bedrockCount = 0;
+
                     for (Direction dir : Direction.Type.HORIZONTAL) {
                         BlockState adj = mc.world.getBlockState(pos.offset(dir));
                         if (adj.isAir()) airCount++;
-                        else if (isBedrock(adj)) bedrockCount++;
+                        else if (isBedrock(adj)) bedrockCount++; // Assuming isBedrock is defined elsewhere
                     }
+
+                    // If this position has exactly two air blocks and two bedrock blocks (a perfect corner)
                     if (airCount == 2 && bedrockCount == 2) {
                         targetCornerPos = pos;
-                        System.out.println("[AutoMiner] Corner candidate: " + pos);
+                        System.out.println("[AutoMiner] Corner candidate found: " + pos);
+
+                        // Determine the mining direction (opposite the nearest bedrock wall)
                         for (Direction dir : Direction.Type.HORIZONTAL) {
                             if (isBedrock(mc.world.getBlockState(pos.offset(dir)))) {
                                 currentDir = dir.getOpposite();
@@ -417,6 +446,7 @@ public class AutoMinerUtils {
         }
         return false;
     }
+
 
     private static void moveTowards(MinecraftClient mc, Vec3d target, boolean flyXZ, boolean flyY) {
         Vec3d dir = target.subtract(mc.player.getPos());

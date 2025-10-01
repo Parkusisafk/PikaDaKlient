@@ -2,6 +2,7 @@ package com.pikadaklient.mixin;
 
 import com.pikadaklient.utils.AutoClickerUtils;
 import com.pikadaklient.utils.AutoMinerUtils;
+import com.pikadaklient.utils.KeyOpenerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -48,6 +49,13 @@ public class CommandMixin {
 			AutoMinerUtils.stop();
 			mc.player.sendMessage(Text.literal("§cAutoClicker stopped."), false);
 			mc.setScreen(null);
+			cir.setReturnValue(true);
+			cir.cancel();
+		} else if (message.equalsIgnoreCase("okey")){
+			mc.setScreen(null);
+
+			KeyOpenerUtils.start();
+
 			cir.setReturnValue(true);
 			cir.cancel();
 		}
