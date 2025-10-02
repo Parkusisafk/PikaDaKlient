@@ -92,9 +92,16 @@ public class AutoMinerUtils {
         switch (currentState) {
 
             case SURFACE_CHECK:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 if (mc.player.getY() >= RESET_Y_THRESHOLD) {
                     mc.player.getAbilities().flying = true;
                     mc.player.getAbilities().setFlySpeed(0.05f);
+                    tickelapsedforsetupmove = 0;
                     currentState = State.SETUP_SCANNING;
                     minY = detectMinY(mc);
                     System.out.println("[AutoMiner] Surface detected. MinY=" + minY);
@@ -102,13 +109,21 @@ public class AutoMinerUtils {
                     currentState = State.AFK_RESET;
                     System.out.println("[AutoMiner] AFK reset triggered.");
                 } else {
+                    tickelapsedforsetupmove = 0;
                     currentState = State.LOOP_MOVE;
                 }
                 break;
 
             case SETUP_SCANNING:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 if (findCorner(mc)) {
                     System.out.println("[AutoMiner] Corner found at " + targetCornerPos);
+                    tickelapsedforsetupmove = 0;
                     currentState = State.SETUP_FLYING;
                 }
                 mc.options.leftKey.setPressed(false);
@@ -117,7 +132,7 @@ public class AutoMinerUtils {
 
             case SETUP_FLYING:
                 tickelapsedforsetupmove++;
-                if(tickelapsedforsetupmove > 300){
+                if(tickelapsedforsetupmove > 1000){
                     currentState = State.AFK_RESET;
                     tickelapsedforsetupmove = 0;
                     break;
@@ -153,6 +168,12 @@ public class AutoMinerUtils {
                 break;
 
             case SETUP_DESCEND:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 mc.options.leftKey.setPressed(false);
                 mc.options.sneakKey.setPressed(true);
                 mc.player.setPitch(AIM_PITCH);
@@ -162,12 +183,19 @@ public class AutoMinerUtils {
                     mc.player.setVelocity(Vec3d.ZERO);
                     turnsCompleted = 0;
                     turnTickCounter = 0;
+                    tickelapsedforsetupmove = 0;
                     currentState = State.SETUP_TURN;
                     System.out.println("[AutoMiner] Setup descend complete. Start mining loop.");
                 }
                 break;
 
             case SETUP_TURN:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 // Ensure no stray keys are pressed
                 mc.options.leftKey.setPressed(false);
                 mc.options.sneakKey.setPressed(false);
@@ -211,6 +239,7 @@ public class AutoMinerUtils {
                     // When close enough to target yaw, move to LOOP_MOVE
                     if (Math.abs(RotationUtils.wrapDegrees(targetYaw - mc.player.getYaw())) < 2.0f) {
                         System.out.println("[AutoMiner] Setup turn complete. Facing " + currentDir);
+                        tickelapsedforsetupmove = 0;
                         currentState = State.LOOP_MOVE;
                     }
                 } else {
@@ -219,9 +248,17 @@ public class AutoMinerUtils {
                 break;
 
             case LOOP_MOVE:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 if (mc.player.getY() <= 20){
+                    tickelapsedforsetupmove = 0;
                     currentState = State.AFK_RESET;
                 } else if (mc.player.getY() >=90){
+                    tickelapsedforsetupmove = 0;
                     currentState = State.SURFACE_CHECK;
                 } else {
                     mc.options.leftKey.setPressed(true);
@@ -253,15 +290,24 @@ public class AutoMinerUtils {
                         turnTargetYaw = mc.player.getYaw() + 90.0f;
                         turnTargetYaw %= 360;
                         turnTickCounter = 0;
+                        tickelapsedforsetupmove = 0;
                         currentState = State.LOOP_TURN;
                     }
                 }
                 break;
 
             case LOOP_TURN:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 if (mc.player.getY() <= 20){
+                    tickelapsedforsetupmove = 0;
                     currentState = State.AFK_RESET;
                 } else if (mc.player.getY() >=90){
+                    tickelapsedforsetupmove = 0;
                     currentState = State.SURFACE_CHECK;
                 } else {
                     float currentYaw = mc.player.getYaw();
@@ -278,10 +324,12 @@ public class AutoMinerUtils {
                         currentDir = currentDir.rotateYClockwise();
                         System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
                         if (turnsCompleted >= 2) {
+                            tickelapsedforsetupmove = 0;
                             currentState = State.DESCEND;
                             descentYStart = mc.player.getY();
                             System.out.println("[AutoMiner] Completed loop, starting descent.");
                         } else {
+                            tickelapsedforsetupmove = 0;
                             currentState = State.LOOP_MOVE;
                         }
                     }
@@ -290,9 +338,17 @@ public class AutoMinerUtils {
                 break;
 
             case DESCEND:
+                tickelapsedforsetupmove++;
+                if(tickelapsedforsetupmove > 300){
+                    currentState = State.AFK_RESET;
+                    tickelapsedforsetupmove = 0;
+                    break;
+                }
                 if (mc.player.getY() <= 20){
+                    tickelapsedforsetupmove = 0;
                     currentState = State.AFK_RESET;
                 } else if (mc.player.getY() >=90){
+                    tickelapsedforsetupmove = 0;
                     currentState = State.SURFACE_CHECK;
                 } else {
                     mc.options.leftKey.setPressed(false);
@@ -304,10 +360,12 @@ public class AutoMinerUtils {
                         mc.options.sneakKey.setPressed(false);
                         System.out.println("[AutoMiner] Descend complete. CurrentY=" + mc.player.getY());
                         if (mc.player.getY() <= 20) {
+                            tickelapsedforsetupmove = 0;
                             currentState = State.AFK_RESET;
                             System.out.println("[AutoMiner] Reached bottom. AFK reset.");
                         } else {
                             turnsCompleted = 0;
+                            tickelapsedforsetupmove = 0;
                             currentState = State.LOOP_MOVE;
                             descentYStart = 0;
                             System.out.println("[AutoMiner] Starting next mining loop.");
@@ -360,7 +418,7 @@ public class AutoMinerUtils {
 //            // You only need to call mc.player.swingHand(Hand.MAIN_HAND) once here.
 //            // No need for a separate HandSwingC2SPacket unless you wanted to prevent the visual swing.
 //            mc.player.swingHand(Hand.MAIN_HAND);
-//
+//e
 //        } else if (mc.targetedEntity != null) {
 //            // Attack entities if they are the target.
 //            mc.interactionManager.attackEntity(mc.player, mc.targetedEntity);
