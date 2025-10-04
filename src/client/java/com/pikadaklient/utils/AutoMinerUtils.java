@@ -1,6 +1,8 @@
 package com.pikadaklient.utils;
 
+import com.pikadaklient.ServerCheck;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
@@ -51,6 +53,8 @@ public class AutoMinerUtils {
     private static double descentYStart = 0;
     private static int tickelapsedforsetupmove = 0;
 
+    public static boolean leftClick = false;
+
     public static void start() {
         if (MinecraftClient.getInstance().player == null) return;
         running = true;
@@ -65,12 +69,13 @@ public class AutoMinerUtils {
         if (mc.options.leftKey != null) mc.options.leftKey.setPressed(false);
         if (mc.options.sneakKey != null) mc.options.sneakKey.setPressed(false);
         if (mc.player != null) mc.player.getAbilities().flying = false;
+        AHKUtils.stopAHK();
         System.out.println("[AutoMiner] Stopped.");
     }
 
     public static void tick(MinecraftClient mc) {
         if (!running || mc.player == null || mc.world == null || mc.interactionManager == null) return;
-
+        ServerCheck.printServer();
         // --- CAPTCHA HANDLER ---
         if (handleCaptcha(mc)) {
             mc.options.attackKey.setPressed(false);
@@ -92,6 +97,10 @@ public class AutoMinerUtils {
         switch (currentState) {
 
             case SURFACE_CHECK:
+                if(leftClick){
+                    leftClick = false;
+                    AHKUtils.stopAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -115,6 +124,10 @@ public class AutoMinerUtils {
                 break;
 
             case SETUP_SCANNING:
+                if(leftClick){
+                    leftClick = false;
+                    AHKUtils.stopAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -131,6 +144,10 @@ public class AutoMinerUtils {
                 break;
 
             case SETUP_FLYING:
+                if(leftClick){
+                    leftClick = false;
+                    AHKUtils.stopAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 1000){
                     currentState = State.AFK_RESET;
@@ -168,6 +185,10 @@ public class AutoMinerUtils {
                 break;
 
             case SETUP_DESCEND:
+                if(leftClick){
+                    leftClick = false;
+                    AHKUtils.stopAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -190,6 +211,10 @@ public class AutoMinerUtils {
                 break;
 
             case SETUP_TURN:
+                if(leftClick){
+                    leftClick = false;
+                    AHKUtils.stopAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -248,6 +273,10 @@ public class AutoMinerUtils {
                 break;
 
             case LOOP_MOVE:
+                if(!leftClick){
+                    leftClick = true;
+                    AHKUtils.startAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -297,6 +326,10 @@ public class AutoMinerUtils {
                 break;
 
             case LOOP_TURN:
+                if(!leftClick){
+                    leftClick = true;
+                    AHKUtils.startAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -323,7 +356,7 @@ public class AutoMinerUtils {
                         turnsCompleted++;
                         currentDir = currentDir.rotateYClockwise();
                         System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
-                        if (turnsCompleted >= 2) {
+                        if (turnsCompleted >= 2) { //hardcoded
                             tickelapsedforsetupmove = 0;
                             currentState = State.DESCEND;
                             descentYStart = mc.player.getY();
@@ -338,6 +371,10 @@ public class AutoMinerUtils {
                 break;
 
             case DESCEND:
+                if(!leftClick){
+                    leftClick = true;
+                    AHKUtils.startAHK();
+                }
                 tickelapsedforsetupmove++;
                 if(tickelapsedforsetupmove > 300){
                     currentState = State.AFK_RESET;
@@ -375,6 +412,10 @@ public class AutoMinerUtils {
                 break;
 
             case AFK_RESET:
+                if(leftClick){
+                    leftClick = false;
+                    AHKUtils.stopAHK();
+                }
                 //mc.options.attackKey.setPressed(true);
                 mc.options.leftKey.setPressed(false);
                 mc.options.sneakKey.setPressed(false);
@@ -522,7 +563,6 @@ public class AutoMinerUtils {
         mc.player.setYaw((float) yawAngle);
         mc.player.setPitch(0.0f);
     }
-
     private static int detectMinY(MinecraftClient mc) {
         int y = mc.player.getBlockPos().getY();
         while (y > mc.world.getBottomY()) {
@@ -535,61 +575,56 @@ public class AutoMinerUtils {
     }
 
     private static boolean handleCaptcha(MinecraftClient mc) {
-        if (!(mc.currentScreen instanceof HandledScreen<?> screen)) {
-            //System.out.println("[DEBUG CAPTCHA] Screen Check: FAILED (Not a HandledScreen)");
+        if (!(mc.currentScreen instanceof GenericContainerScreen screen)) {
             return false;
         }
 
-        // Confirmed screen is a HandledScreen (class_476)
         Slot targetSlot = null;
 
         System.out.println("--- CAPTCHA ITEM DEBUG START ---");
 
-        // Iterate through all slots in the open menu
         for (Slot slot : screen.getScreenHandler().slots) {
             ItemStack stack = slot.getStack();
+            if (stack.isEmpty()) continue;
 
-            if (stack.isEmpty()) continue; // Skip empty slots
-
-            // Get the item's unformatted name and the item ID string
             String plainName = stack.getName().getString().toLowerCase();
             String itemString = stack.getItem().toString();
 
-            // --- ITEM MATCHING CONDITIONS ---
             boolean nameMatch = plainName.contains("click") && (plainName.contains("confirm") || plainName.contains("continue"));
             boolean isFiller = itemString.contains("stained_glass_pane");
             boolean isMatch = nameMatch && !isFiller;
 
-            // Log everything about the detected item
             System.out.printf(
                     "[SLOT %d] Item: %s | Name: '%s' | NameMatch: %b | IsFiller: %b | Final Match: %b%n",
                     slot.id, itemString, plainName, nameMatch, isFiller, isMatch
             );
 
-            // --- Core Clicking Logic ---
             if (isMatch) {
                 targetSlot = slot;
-                break; // Found the target, exit the loop
+                break;
             }
         }
 
         System.out.println("--- CAPTCHA ITEM DEBUG END ---");
 
-        // Click the target slot if found
         if (targetSlot != null) {
             System.out.printf("[CAPTCHA SUCCESS] Clicking Slot ID: %d%n", targetSlot.id);
-            mc.interactionManager.clickSlot(
-                    screen.getScreenHandler().syncId,
-                    targetSlot.id,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
-            );
+            clickSlot(screen, targetSlot.id, false); // use helper, left-click
         } else {
             System.out.println("[CAPTCHA FAIL] No clickable item found.");
         }
 
         return targetSlot != null;
+    }
+    private static void clickSlot(GenericContainerScreen screen, int slot, boolean right) {
+         MinecraftClient mc = MinecraftClient.getInstance();
+         mc.interactionManager.clickSlot(
+                screen.getScreenHandler().syncId,
+                slot,
+                right ? 1 : 0,
+                SlotActionType.PICKUP,
+                mc.player
+        );
     }
 
     private static boolean isBedrock(BlockState state) {
