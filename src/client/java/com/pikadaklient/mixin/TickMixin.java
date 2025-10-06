@@ -1,5 +1,6 @@
 package com.pikadaklient.mixin;
 
+import com.pikadaklient.utils.AbyssRunner;
 import com.pikadaklient.utils.AutoClickerUtils;
 import com.pikadaklient.utils.AutoMinerUtils;
 import net.minecraft.client.MinecraftClient;
@@ -25,5 +26,6 @@ public class TickMixin {
 
         // Call the AutoClicker tick function
         AutoMinerUtils.tick(mc);
+        AbyssRunner.tick(mc);
     }
 }

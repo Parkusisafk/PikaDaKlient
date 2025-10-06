@@ -1,5 +1,6 @@
 package com.pikadaklient.mixin;
 
+import com.pikadaklient.utils.AbyssRunner;
 import com.pikadaklient.utils.AutoClickerUtils;
 import com.pikadaklient.utils.AutoMinerUtils;
 import com.pikadaklient.utils.KeyOpenerUtils;
@@ -55,6 +56,20 @@ public class CommandMixin {
 			mc.setScreen(null);
 
 			KeyOpenerUtils.start();
+
+			cir.setReturnValue(true);
+			cir.cancel();
+		} else if (message.equalsIgnoreCase("as") || message.equalsIgnoreCase("sa")){
+			mc.setScreen(null);
+
+			AbyssRunner.start(mc);
+
+			cir.setReturnValue(true);
+			cir.cancel();
+		} else if (message.equalsIgnoreCase("ae") || message.equalsIgnoreCase("ea")){
+			mc.setScreen(null);
+
+			AbyssRunner.stop();
 
 			cir.setReturnValue(true);
 			cir.cancel();
