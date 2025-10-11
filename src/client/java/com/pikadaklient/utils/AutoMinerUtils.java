@@ -1,11 +1,19 @@
 package com.pikadaklient.utils;
 
 import com.pikadaklient.ServerCheck;
+import com.pikadaklient.SidebarParser;
+import com.pikadaklient.window.AutoManager;
+import com.pikadaklient.window.ProgressTracker;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.screen.slot.Slot;
@@ -19,6 +27,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.BlockState;
 import net.minecraft.text.Text;
+
+import java.util.concurrent.CompletableFuture;
 
 public class AutoMinerUtils {
 
@@ -59,7 +69,7 @@ public class AutoMinerUtils {
         if (MinecraftClient.getInstance().player == null) return;
         running = true;
         currentState = State.SURFACE_CHECK;
-        System.out.println("[AutoMiner] Started.");
+//        System.out.println("[AutoMiner] Started.");
     }
 
     public static void stop() {
@@ -70,13 +80,30 @@ public class AutoMinerUtils {
         if (mc.options.sneakKey != null) mc.options.sneakKey.setPressed(false);
         if (mc.player != null) mc.player.getAbilities().flying = false;
         AHKUtils.stopAHK();
-        System.out.println("[AutoMiner] Stopped.");
+//        System.out.println("[AutoMiner] Stopped.");
     }
 
     public static void tick(MinecraftClient mc) {
         if (!running || mc.player == null || mc.world == null || mc.interactionManager == null) return;
-        ServerCheck.printServer();
+        if(isPlayerWithin(-1719,80,-22)){
+            running = false;
+            stop();
+            AutoMinerUtils.runTransferSequenceAsync().thenAccept(success -> {
+                System.out.println("Transfer success: " + success);
+
+                if (success) {
+                    // ✅ Do something if the transfer succeeded
+                    start();
+                } else {
+                    // ❌ Die
+                    System.out.println("failed!");
+                }
+            });
+        }
+        //ServerCheck.printServer();
         // --- CAPTCHA HANDLER ---
+
+        AutoManager.getInstance().updateCurrentAction(currentState.toString());
         if (handleCaptcha(mc)) {
             mc.options.attackKey.setPressed(false);
             mc.options.leftKey.setPressed(false);
@@ -113,10 +140,10 @@ public class AutoMinerUtils {
                     tickelapsedforsetupmove = 0;
                     currentState = State.SETUP_SCANNING;
                     minY = detectMinY(mc);
-                    System.out.println("[AutoMiner] Surface detected. MinY=" + minY);
+//                    //System.out.println("[AutoMiner] Surface detected. MinY=" + minY);
                 } else if (mc.player.getY() <= 19) { //hardcoded
                     currentState = State.AFK_RESET;
-                    System.out.println("[AutoMiner] AFK reset triggered.");
+//                    //System.out.println("[AutoMiner] AFK reset triggered.");
                 } else {
                     tickelapsedforsetupmove = 0;
                     currentState = State.LOOP_MOVE;
@@ -135,7 +162,7 @@ public class AutoMinerUtils {
                     break;
                 }
                 if (findCorner(mc)) {
-                    System.out.println("[AutoMiner] Corner found at " + targetCornerPos);
+//                    //System.out.println("[AutoMiner] Corner found at " + targetCornerPos);
                     tickelapsedforsetupmove = 0;
                     currentState = State.SETUP_FLYING;
                 }
@@ -154,6 +181,9 @@ public class AutoMinerUtils {
                     tickelapsedforsetupmove = 0;
                     break;
                 }
+
+
+
                 if (!mc.player.getAbilities().flying) {
                     // Simulate a jump (spacebar press)
                     mc.options.jumpKey.setPressed(true);
@@ -166,7 +196,7 @@ public class AutoMinerUtils {
                     mc.player.getAbilities().flying = true;
                     mc.player.getAbilities().setFlySpeed(0.05f);
 
-                    System.out.println("[AutoMiner] Activated flying mode.");
+//                    //System.out.println("[AutoMiner] Activated flying mode.");
                 }
                 BlockPos pos = targetCornerPos;
                 Vec3d targetCenter = new Vec3d(
@@ -174,13 +204,13 @@ public class AutoMinerUtils {
                         mc.player.getY(), // current Y
                         pos.getZ() + 0.5  // center Z
                 );                moveTowards(mc, targetCenter, true, false);
-                System.out.println("[AutoMiner] Flying to corner: currentPos=" + mc.player.getPos());
+//                //System.out.println("[AutoMiner] Flying to corner: currentPos=" + mc.player.getPos());
 
                 if (mc.player.getPos().distanceTo(targetCenter) < 0.3) {
                     mc.player.setVelocity(Vec3d.ZERO);
                     currentState = State.SETUP_DESCEND;
                     tickelapsedforsetupmove = 0;
-                    System.out.println("[AutoMiner] Reached corner, descending...");
+//                    //System.out.println("[AutoMiner] Reached corner, descending...");
                 }
                 break;
 
@@ -206,7 +236,7 @@ public class AutoMinerUtils {
                     turnTickCounter = 0;
                     tickelapsedforsetupmove = 0;
                     currentState = State.SETUP_TURN;
-                    System.out.println("[AutoMiner] Setup descend complete. Start mining loop.");
+//                    //System.out.println("[AutoMiner] Setup descend complete. Start mining loop.");
                 }
                 break;
 
@@ -263,12 +293,12 @@ public class AutoMinerUtils {
 
                     // When close enough to target yaw, move to LOOP_MOVE
                     if (Math.abs(RotationUtils.wrapDegrees(targetYaw - mc.player.getYaw())) < 2.0f) {
-                        System.out.println("[AutoMiner] Setup turn complete. Facing " + currentDir);
+//                        System.out.println("[AutoMiner] Setup turn complete. Facing " + currentDir);
                         tickelapsedforsetupmove = 0;
                         currentState = State.LOOP_MOVE;
                     }
                 } else {
-                    System.out.println("[AutoMiner] Could not determine initial tunnel direction!");
+//                    System.out.println("[AutoMiner] Could not determine initial tunnel direction!");
                 }
                 break;
 
@@ -309,12 +339,12 @@ public class AutoMinerUtils {
                     BlockState backState = mc.world.getBlockState(backPos);
                     BlockState leftState = mc.world.getBlockState(leftPos);
 
-                    System.out.println("[AutoMiner] Back block: " + backPos + " Type: " + backState.getBlock().getTranslationKey());
-                    System.out.println("[AutoMiner] Left block: " + leftPos + " Type: " + leftState.getBlock().getTranslationKey());
+//                    System.out.println("[AutoMiner] Back block: " + backPos + " Type: " + backState.getBlock().getTranslationKey());
+//                    System.out.println("[AutoMiner] Left block: " + leftPos + " Type: " + leftState.getBlock().getTranslationKey());
 
 // Turning condition: bedrock to the left
                     if (isBedrock(leftState)) {
-                        System.out.println("[AutoMiner] Bedrock detected on left at " + leftPos + ", turning...");
+//                        System.out.println("[AutoMiner] Bedrock detected on left at " + leftPos + ", turning...");
                         mc.options.leftKey.setPressed(false);
                         turnTargetYaw = mc.player.getYaw() + 90.0f;
                         turnTargetYaw %= 360;
@@ -355,12 +385,12 @@ public class AutoMinerUtils {
                     if (turnTickCounter >= TURN_TICKS) {
                         turnsCompleted++;
                         currentDir = currentDir.rotateYClockwise();
-                        System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
+//                        System.out.println("[AutoMiner] Turn completed. Turns done: " + turnsCompleted);
                         if (turnsCompleted >= 2) { //hardcoded
                             tickelapsedforsetupmove = 0;
                             currentState = State.DESCEND;
                             descentYStart = mc.player.getY();
-                            System.out.println("[AutoMiner] Completed loop, starting descent.");
+//                            System.out.println("[AutoMiner] Completed loop, starting descent.");
                         } else {
                             tickelapsedforsetupmove = 0;
                             currentState = State.LOOP_MOVE;
@@ -395,17 +425,17 @@ public class AutoMinerUtils {
 
                     if (mc.player.getY() <= descentYStart - 3) {
                         mc.options.sneakKey.setPressed(false);
-                        System.out.println("[AutoMiner] Descend complete. CurrentY=" + mc.player.getY());
+//                        System.out.println("[AutoMiner] Descend complete. CurrentY=" + mc.player.getY());
                         if (mc.player.getY() <= 20) {
                             tickelapsedforsetupmove = 0;
                             currentState = State.AFK_RESET;
-                            System.out.println("[AutoMiner] Reached bottom. AFK reset.");
+//                            System.out.println("[AutoMiner] Reached bottom. AFK reset.");
                         } else {
                             turnsCompleted = 0;
                             tickelapsedforsetupmove = 0;
                             currentState = State.LOOP_MOVE;
                             descentYStart = 0;
-                            System.out.println("[AutoMiner] Starting next mining loop.");
+//                            System.out.println("[AutoMiner] Starting next mining loop.");
                         }
                     }
                 }
@@ -473,7 +503,7 @@ public class AutoMinerUtils {
         // Check all 4 cardinal directions around player
         for (Direction dir : Direction.Type.HORIZONTAL) {
             BlockState state = mc.world.getBlockState(pos.offset(dir));
-            System.out.println("[AutoMiner] Check " + dir + ": " + state.getBlock().getTranslationKey());
+//            System.out.println("[AutoMiner] Check " + dir + ": " + state.getBlock().getTranslationKey());
         }
 
         // Loop through clockwise order
@@ -486,12 +516,12 @@ public class AutoMinerUtils {
             boolean thirdOpen = !isBedrock(mc.world.getBlockState(pos.offset(cw2)));
 
             if (firstBedrock && secondBedrock && thirdOpen) {
-                System.out.println("[AutoMiner] Initial move dir found: " + cw2);
+//                System.out.println("[AutoMiner] Initial move dir found: " + cw2);
                 return cw2; // this is the correct currentDir
             }
         }
 
-        System.out.println("[AutoMiner] Failed to find initial move dir, defaulting to NORTH");
+//        System.out.println("[AutoMiner] Failed to find initial move dir, defaulting to NORTH");
         return Direction.NORTH; // fallback
     }
 
@@ -510,7 +540,7 @@ public class AutoMinerUtils {
 
                 // --- BLACKLIST CHECK ---
                 if (x == BLACKLIST_X || z == BLACKLIST_Z) {
-                    System.out.println("[AutoMiner] Skipping blacklisted corner: " + pos + " (Hardcoded exclusion)");
+//                    System.out.println("[AutoMiner] Skipping blacklisted corner: " + pos + " (Hardcoded exclusion)");
                     continue; // Skip the rest of the loop iteration for this position
                 }
                 // -----------------------
@@ -529,7 +559,7 @@ public class AutoMinerUtils {
                     // If this position has exactly two air blocks and two bedrock blocks (a perfect corner)
                     if (airCount == 2 && bedrockCount == 2) {
                         targetCornerPos = pos;
-                        System.out.println("[AutoMiner] Corner candidate found: " + pos);
+//                        System.out.println("[AutoMiner] Corner candidate found: " + pos);
 
                         // Determine the mining direction (opposite the nearest bedrock wall)
                         for (Direction dir : Direction.Type.HORIZONTAL) {
@@ -581,7 +611,7 @@ public class AutoMinerUtils {
 
         Slot targetSlot = null;
 
-        System.out.println("--- CAPTCHA ITEM DEBUG START ---");
+//        System.out.println("--- CAPTCHA ITEM DEBUG START ---");
 
         for (Slot slot : screen.getScreenHandler().slots) {
             ItemStack stack = slot.getStack();
@@ -605,13 +635,13 @@ public class AutoMinerUtils {
             }
         }
 
-        System.out.println("--- CAPTCHA ITEM DEBUG END ---");
+//        System.out.println("--- CAPTCHA ITEM DEBUG END ---");
 
         if (targetSlot != null) {
             System.out.printf("[CAPTCHA SUCCESS] Clicking Slot ID: %d%n", targetSlot.id);
             clickSlot(screen, targetSlot.id, false); // use helper, left-click
         } else {
-            System.out.println("[CAPTCHA FAIL] No clickable item found.");
+//            System.out.println("[CAPTCHA FAIL] No clickable item found.");
         }
 
         return targetSlot != null;
@@ -630,4 +660,151 @@ public class AutoMinerUtils {
     private static boolean isBedrock(BlockState state) {
         return state.getBlock() == Blocks.BEDROCK;
     }
-}
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
+
+    public static boolean isPlayerWithin(int targetX, int targetY, int targetZ) {
+        if (mc.player == null) return false;
+
+        double px = mc.player.getX();
+        double py = mc.player.getY();
+        double pz = mc.player.getZ();
+
+        double dx = px - targetX;
+        double dy = py - targetY;
+        double dz = pz - targetZ;
+
+        // Euclidean distance
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        return distance <= 10.0;
+    }
+
+    /**
+     * Runs the transfer routine once asynchronously, returns CompletableFuture<Boolean>.
+     */
+    public static CompletableFuture<Boolean> runTransferSequenceAsync() {
+        CompletableFuture<Boolean> result = new CompletableFuture<>();
+
+        new Thread(() -> {
+            ClientPlayerEntity player = mc.player;
+            ClientWorld world = mc.world;
+            if (player == null || world == null) {
+                result.complete(false);
+                return;
+            }
+
+            try {
+                Thread.sleep(2000);
+
+                // Step 1: Select 5th slot and check for compass
+                int slotIndex = 4;
+                mc.execute(() -> player.getInventory().setSelectedSlot(slotIndex));
+
+                Thread.sleep(100); // small delay for slot update
+
+                ItemStack stack = player.getMainHandStack();
+                if (stack.isEmpty() || stack.getItem() != Items.COMPASS) {
+                    result.complete(false);
+                    return;
+                }
+
+                // Step 2: Right-click the compass
+                mc.execute(() -> mc.interactionManager.interactItem(player, Hand.MAIN_HAND));
+
+                // Step 3: Wait up to 5s for chest GUI
+                if (!waitForScreen(GenericContainerScreen.class, 5000)) {
+                    result.complete(false);
+                    return;
+                }
+                Thread.sleep(2000);
+                // Step 4: Check for iron bars
+                GenericContainerScreen chest = (GenericContainerScreen) mc.currentScreen;
+                int size = chest.getScreenHandler().getInventory().size();
+                if (size < 54) {
+                    result.complete(false);
+                    return;
+                }
+
+                int ironBarSlot = -1;
+                for (int i = 0; i < size; i++) {
+                    ItemStack item = chest.getScreenHandler().getInventory().getStack(i);
+                    if (!item.isEmpty() && item.getItem() == Items.IRON_BARS) {
+                        ironBarSlot = i;
+                        break;
+                    }
+                }
+
+                if (ironBarSlot == -1) {
+                    result.complete(false);
+                    return;
+                }
+
+                // Step 5: Click iron bars
+                final int barSlot = ironBarSlot;
+                mc.execute(() -> mc.interactionManager.clickSlot(
+                        chest.getScreenHandler().syncId,
+                        barSlot, 0, SlotActionType.PICKUP, player
+                ));
+
+                // Step 6: Wait 10s for transfer
+                Thread.sleep(10000);
+
+                // Step 7: Walk forward until bedrock or 15s timeout
+                press(mc.options.forwardKey, true);
+                boolean foundBedrock = waitForBedrockBelow(15000);
+                press(mc.options.forwardKey, false);
+                if (!foundBedrock) {
+                    result.complete(false);
+                    return;
+                }
+
+                // Step 8: Jump + walk 1s
+                press(mc.options.jumpKey, true);
+                press(mc.options.forwardKey, true);
+                Thread.sleep(1000);
+                press(mc.options.jumpKey, false);
+                press(mc.options.forwardKey, false);
+
+                // Step 9: Check coordinates
+                BlockPos target = new BlockPos(67095, 90, 233042);
+                BlockPos current = player.getBlockPos();
+                boolean within10 = current.getSquaredDistance(target) <= 100.0;
+                result.complete(true); //hardcoded
+
+            } catch (Exception e) {
+                result.complete(false);
+            }
+        }, "AutoSubserverThread").start();
+
+        return result;
+    }
+
+    // === Helper methods ===
+
+    private static boolean waitForScreen(Class<? extends Screen> screenType, long timeoutMs) {
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < timeoutMs) {
+            if (mc.currentScreen != null && screenType.isInstance(mc.currentScreen))
+                return true;
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+        }
+        return false;
+    }
+
+    private static boolean waitForBedrockBelow(long timeoutMs) {
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < timeoutMs) {
+            if (mc.player == null || mc.world == null) return false;
+            BlockPos below = mc.player.getBlockPos().down();
+            if (mc.world.getBlockState(below).getBlock() == Blocks.BEDROCK)
+                return true;
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+        }
+        return false;
+    }
+
+    private static void press(KeyBinding key, boolean down) {
+        mc.execute(() -> key.setPressed(down));
+    }
+
+    }

@@ -1,9 +1,11 @@
 package com.pikadaklient.mixin;
 
+import com.pikadaklient.ScoreboardPrinter;
 import com.pikadaklient.utils.AbyssRunner;
 import com.pikadaklient.utils.AutoClickerUtils;
 import com.pikadaklient.utils.AutoMinerUtils;
 import com.pikadaklient.utils.KeyOpenerUtils;
+import com.pikadaklient.window.AutoManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -41,8 +43,16 @@ public class CommandMixin {
 		System.out.println("[PikadaClient Debug] KeyPress Mixin running. Processed message: \"" + message + "\"");
 
 		if (message.equalsIgnoreCase("sp")) {
-			AutoMinerUtils.start();
-			mc.player.sendMessage(Text.literal("§aAutoClicker started."), false);
+			AutoManager manager = AutoManager.getInstance();
+			if (manager == null) {
+				manager = new AutoManager("sp");
+				manager.initialize();
+			} else {
+				// optionally update action or re-run initialization if needed
+				manager.updateCurrentAction("prestigegrind");
+				manager.TransferCompleted("sp");
+			}
+
 			mc.setScreen(null);
 			cir.setReturnValue(true);
 			cir.cancel();
@@ -60,16 +70,38 @@ public class CommandMixin {
 			cir.setReturnValue(true);
 			cir.cancel();
 		} else if (message.equalsIgnoreCase("as") || message.equalsIgnoreCase("sa")){
+			AutoManager manager = AutoManager.getInstance();
+			if (manager == null) {
+				manager = new AutoManager("as");
+				manager.initialize();
+			} else {
+				manager.updateCurrentAction("abyssgrind");
+				manager.TransferCompleted("as");
+			}
+
 			mc.setScreen(null);
-
-			AbyssRunner.start(mc);
-
 			cir.setReturnValue(true);
 			cir.cancel();
 		} else if (message.equalsIgnoreCase("ae") || message.equalsIgnoreCase("ea")){
 			mc.setScreen(null);
 
 			AbyssRunner.stop();
+
+			cir.setReturnValue(true);
+			cir.cancel();
+		} else if (message.equalsIgnoreCase("sr") || message.equalsIgnoreCase("rs")){
+			mc.setScreen(null);
+
+			AutoMinerUtils.runTransferSequenceAsync().thenAccept(success -> {
+				System.out.println("Transfer success: " + success);
+			});
+
+			cir.setReturnValue(true);
+			cir.cancel();
+		} else if (message.equalsIgnoreCase("ps") ){
+			mc.setScreen(null);
+
+			ScoreboardPrinter.dumpEverything();
 
 			cir.setReturnValue(true);
 			cir.cancel();

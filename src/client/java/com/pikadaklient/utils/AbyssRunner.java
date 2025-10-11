@@ -1,5 +1,6 @@
 package com.pikadaklient.utils;
 
+import com.pikadaklient.window.AutoManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -12,6 +13,8 @@ import net.minecraft.world.RaycastContext;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.pikadaklient.utils.AutoMinerUtils.isPlayerWithin;
 
 public class AbyssRunner {
     // --- Configurable constants ---
@@ -111,6 +114,22 @@ public class AbyssRunner {
             return;
         }
 
+        if(isPlayerWithin(-1719,80,-22)){
+            running = false;
+            stop();
+            AutoMinerUtils.runTransferSequenceAsync().thenAccept(success -> {
+                System.out.println("Transfer success: " + success);
+
+                if (success) {
+                    // ✅ Do something if the transfer succeeded
+                    start(mc);
+                } else {
+                    // ❌ Die
+                    System.out.println("failed!");
+                }
+            });
+        }
+
         if (!running && state == NavState.WAITING_START) {
             if (leftclicking) {
                 leftclicking = false;
@@ -167,7 +186,7 @@ public class AbyssRunner {
                     List<Vec3d> hitVecs = scanVisibleYGTHitVecs(mc, SCAN_RADIUS);
                     if (!hitVecs.isEmpty()) {
                         buildAndStartHoverChainFromHitVecs(mc, hitVecs);
-                        System.out.println("hitVecs: " + hitVecs.size());
+                        //System.out.println("hitVecs: " + hitVecs.size());
                     } else {
                         advanceToNextWaypoint();
                     }
@@ -220,12 +239,15 @@ public class AbyssRunner {
         currentGotoTarget = target;
         gotoStartTime = System.currentTimeMillis();
         state = NavState.NAVIGATING;
+        AutoManager.getInstance().updateCurrentAction(state.toString());
+
     }
 
     private static void advanceToNextWaypoint() {
         waypointIndex++;
         if (waypointIndex >= WAYPOINTS.size()) waypointIndex = 0;
         state = NavState.RUNNING;
+        AutoManager.getInstance().updateCurrentAction(state.toString());
     }
 
     /**
@@ -307,7 +329,7 @@ public class AbyssRunner {
         Vec3d eyeRef = mc.player.getCameraPosVec(1.0f);
         deduped.sort(Comparator.comparingDouble(vec -> eyeRef.distanceTo(vec)));
 
-        System.out.println("RaycastHitVec scan (per-face) found " + deduped.size() + " visible hit points within " + radius + ".");
+        //System.out.println("RaycastHitVec scan (per-face) found " + deduped.size() + " visible hit points within " + radius + ".");
         return deduped;
     }
 
@@ -409,7 +431,7 @@ public class AbyssRunner {
         }
 
         Vec3d targetVec = hoverList.get(hoverIndex);
-        System.out.println("Hovering to hitVec " + targetVec);
+        //System.out.println("Hovering to hitVec " + targetVec);
 
         double eyeX = mc.player.getPos().x;
         double eyeY = mc.player.getPos().y + mc.player.getEyeHeight(mc.player.getPose());
