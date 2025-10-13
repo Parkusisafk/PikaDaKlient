@@ -206,7 +206,7 @@ public class AutoMinerUtils {
                 );                moveTowards(mc, targetCenter, true, false);
 //                //System.out.println("[AutoMiner] Flying to corner: currentPos=" + mc.player.getPos());
 
-                if (mc.player.getPos().distanceTo(targetCenter) < 0.3) {
+                if (mc.player.getPos().distanceTo(targetCenter) < 0.25) {
                     mc.player.setVelocity(Vec3d.ZERO);
                     currentState = State.SETUP_DESCEND;
                     tickelapsedforsetupmove = 0;

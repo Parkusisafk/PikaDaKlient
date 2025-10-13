@@ -114,7 +114,7 @@ public class AbyssRunner {
             return;
         }
 
-        if(isPlayerWithin(-1719,80,-22)){
+        if(running && isPlayerWithin(-1719,80,-22)){
             running = false;
             stop();
             AutoMinerUtils.runTransferSequenceAsync().thenAccept(success -> {

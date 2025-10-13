@@ -13,6 +13,8 @@ public class ProgressTracker {
     private int ascension = 0;
     private int requiredPrestige = 0;
     private int coins = 0;
+    private int tickelapsed = 0;
+    private int sessiontime = 0;
 
     // === Swing Components (Non-Static) ===
     private JFrame frame;
@@ -160,8 +162,10 @@ public class ProgressTracker {
                         " Req. Prestige:  %d%n" +
                         " Prestige:       %d%n" +
                         " Ascension:      %d%n" +
-                        " Coins:          %d%n", // Use comma for thousands separator
-                currentState, currentAction, requiredPrestige, prestige, ascension, coins
+                        " Coins:          %d%n" +
+                        " Curr. Action time:  %ds%n" +
+                        " Session Time: %dd %dh %dm %ds",
+                currentState, currentAction, requiredPrestige, prestige, ascension, coins, tickelapsed, sessiontime /86400,(sessiontime%86400)/3600,(sessiontime%3600)/60 , sessiontime%60
         );
         textArea.setText(text);
     }
@@ -171,11 +175,20 @@ public class ProgressTracker {
     // delegate the state change to the EDT to prevent race conditions with updateDisplay()
 
     public void setCurrentState(String state) {
+        if(this.currentState != state){
+            SwingUtilities.invokeLater(() -> this.tickelapsed = 0);
+
+        }
         SwingUtilities.invokeLater(() -> this.currentState = state);
     }
 
     public void setCurrentAction(String action) {
+        if(this.currentAction != action){
+            SwingUtilities.invokeLater(() -> this.tickelapsed = 0);
+        }
         SwingUtilities.invokeLater(() -> this.currentAction = action);
+
+
     }
 
     public void setPrestige(int value) {
@@ -192,5 +205,21 @@ public class ProgressTracker {
 
     public void setRequiredPrestige(int value){
         SwingUtilities.invokeLater(() -> this.requiredPrestige = value);
+    }
+
+    public void calledEveryTick(){
+        new Thread(() ->{
+            try{
+                while(true){
+                    SwingUtilities.invokeLater(() -> this.tickelapsed++);
+                    SwingUtilities.invokeLater(() -> this.sessiontime++);
+                    Thread.sleep(1000);
+                }
+            } catch(Exception e){
+                System.out.println(e);
+            }
+        }).start();
+
+
     }
 }

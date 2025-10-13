@@ -1,5 +1,6 @@
 package com.pikadaklient;
 
+import com.pikadaklient.window.ProgressTracker;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.network.packet.s2c.play.ScoreboardObjectiveUpdateS2CPacket;
@@ -13,7 +14,7 @@ public class ClientInit implements ClientModInitializer {
     public void onInitializeClient() {
         System.out.println("PikaDaKlient Client Initialized!");
         System.setProperty("java.awt.headless", "false");
-
+        ProgressTracker.getInstance().calledEveryTick();
         // Start the AHK script on client init
         //startAHKScript();
 

@@ -3,6 +3,7 @@ package com.pikadaklient.mixin;
 import com.pikadaklient.utils.AbyssRunner;
 import com.pikadaklient.utils.AutoClickerUtils;
 import com.pikadaklient.utils.AutoMinerUtils;
+import com.pikadaklient.window.ProgressTracker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.network.ClientPlayerEntity;
