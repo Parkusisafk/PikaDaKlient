@@ -23,6 +23,8 @@
   
 - Custom tracker screen as seen above to keep track of progress and if the bot is stuck/broken
 
+- Oh Ya it can also do captchas as well
+
 ## Usage
 
 Set up Idea, change path of pikaclick.exe to your path, build the mod, run on vers 1.21.8 fabric
