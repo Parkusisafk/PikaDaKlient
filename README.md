@@ -1,14 +1,13 @@
 # PIKADAKLIENT
 
-## Setup
+## CC0 1.0 Universal License
 
 (or pikaclient or pikadaclient)
 
-## CC0 1.0 Universal License
+## Features
 
 <img width="278" height="199" alt="image" src="https://github.com/user-attachments/assets/14065798-32e3-4e3f-b906-4edfbea4fde8" />
 
-Features:
 
 - Auto Mining (with custom enchantments enabled) -->StartCommand="sp", EndCommand="ep"
 
@@ -24,4 +23,9 @@ Features:
   
 - Custom tracker screen as seen above to keep track of progress and if the bot is stuck/broken
 
-Thank you for using!
+## Usage
+
+Set up Idea, change path of pikaclick.exe to your path, build the mod, run on vers 1.21.8 fabric
+
+
+Thank you for using! Queries find me discord username parkusdaking
